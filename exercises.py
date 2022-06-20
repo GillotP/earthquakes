@@ -49,16 +49,20 @@ def exercise_3(n):
 	def dumb_is_prime(found_primes, n):
 		if n == 0:
 			return False
-		#for i in found_primes + list(range(found_primes[-1], int(math.sqrt(n))+1)):
-		for i in range(2, int(math.sqrt(n))+1):
+
+		for i in found_primes + list(range(found_primes[-1]+1, int(math.sqrt(n))+1)):
+		#for i in range(2, int(math.sqrt(n))+1):
 			if n % i == 0:
 				return False
-		found_primes.append(n)
 		return True
 
 	largest_prime_factor = None
 	for i in range(n):
-		if dumb_is_prime(found_primes, i) and n % i == 0:
+		i_is_prime = dumb_is_prime(found_primes, i)
+		if i_is_prime:
+			found_primes.append(i)
+			print("ok")
+		if i_is_prime and n % i == 0:
 		#if is_prime(i) and n % i == 0:
 			largest_prime_factor = i
 	print(largest_prime_factor)

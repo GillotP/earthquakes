@@ -50,8 +50,9 @@ def exercise_3(n):
 		if n == 0:
 			return False
 
-		for i in found_primes + list(range(found_primes[-1]+1, int(math.sqrt(n))+1)):
-		#for i in range(2, int(math.sqrt(n))+1):
+		#for i in found_primes + list(range(found_primes[-1]+1, int(math.sqrt(n))+1)):
+		print(found_primes + list(range(found_primes[-1]+1, int(math.sqrt(n))+1)))
+		for i in range(2, int(math.sqrt(n))+1):
 			if n % i == 0:
 				return False
 		return True
@@ -61,7 +62,7 @@ def exercise_3(n):
 		i_is_prime = dumb_is_prime(found_primes, i)
 		if i_is_prime:
 			found_primes.append(i)
-			print("ok")
+			print(found_primes)
 		if i_is_prime and n % i == 0:
 		#if is_prime(i) and n % i == 0:
 			largest_prime_factor = i

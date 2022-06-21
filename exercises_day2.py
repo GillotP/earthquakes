@@ -97,7 +97,6 @@ class EarthquakesRecord():
 									   "N": self.earthquakes["Latitudine"].to_numpy(),
 									   "E": self.earthquakes["Longitudine"].to_numpy()
 									  }
-		i, j = self.earth_map.geo_coordinates_2_idxs(earthquakes_geo_coordinates)
 		return self.earth_map.predict_land_or_water(earthquakes_geo_coordinates, show_predictions)
 
 def main(show_predictions, subsampling_factor):

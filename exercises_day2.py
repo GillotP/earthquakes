@@ -27,14 +27,7 @@ class EarthMap():
 	def load_data(self, path, subsampling_factor):
 		self.map = np.fromfile(path, dtype=np.uint8).reshape([21600, 43200])[::subsampling_factor]
 
-	def set_figure(self):
-		fig, ax = plt.subplots(1, 1)
-		ax.imshow(self.map, aspect="auto", cmap=colors.ListedColormap(MARYLAND_COLORS))
-		# ax.set_xticks([])
-		# ax.set_yticks([])
-		return fig, ax
-
-	def set_frame(self, ax, geo_coordinates, extra_frame_size=10.0):
+	def set_frame(self, ax, geo_coordinates, extra_frame_size=10.0, num_ticks=4):
 		border_geo_coordinates = {
 								  "N": np.array([max(-90.0, np.min(geo_coordinates["N"]) - extra_frame_size), 
 								  				 min(90.0, np.max(geo_coordinates["N"]) + extra_frame_size)]),
@@ -44,35 +37,59 @@ class EarthMap():
 		top_bottom, left_right = self.geo_coordinates_2_idxs(border_geo_coordinates)
 		ax.set_xlim(left_right)
 		ax.set_ylim(top_bottom)
+		xticks = np.linspace(left_right[0], left_right[1], num_ticks)
+		yticks = np.linspace(top_bottom[1], top_bottom[0], num_ticks)
+		ax.set_xticks(xticks)
+		ax.set_yticks(yticks)
+		geo_coordinates_ticks = self.idxs_2_geo_coordinates(i=yticks, j=xticks)
+		ax.set_xticklabels(np.round(geo_coordinates_ticks["E"], 2))
+		ax.set_yticklabels(np.round(geo_coordinates_ticks["N"], 2))
 
 	def geo_coordinates_2_idxs(self, geo_coordinates):
-		i = np.floor(((90 - geo_coordinates["N"]) / 180) * (self.map.shape[0] - 1)).astype(int)  # i <==> latitude
-		j = np.floor(((180 + geo_coordinates["E"]) / 360) * (self.map.shape[1] - 1)).astype(int) # j <==> longitude
+		i = np.round((90 - geo_coordinates["N"]) * ((self.map.shape[0] - 1) / 180)).astype(int)  # i <==> latitude
+		j = np.round((180 + geo_coordinates["E"]) * ((self.map.shape[1] - 1) / 360)).astype(int) # j <==> longitude
+		# Safeguard:
+		i = np.minimum(np.maximum(i, 0), self.map.shape[0] - 1)
+		j = np.minimum(np.maximum(j, 0), self.map.shape[1] - 1)
 		return i, j
+
+	def idxs_2_geo_coordinates(self, i, j):
+		geo_coordinates = {
+						   "N": -(i / ((self.map.shape[0] - 1) / 180) - 90.0),
+						   "E": (j / ((self.map.shape[1] - 1) / 360) - 180.0)
+						  }
+		# Safeguard:
+		geo_coordinates["N"] = np.minimum(np.maximum(geo_coordinates["N"], -90.0), 90.0)
+		geo_coordinates["E"] = np.minimum(np.maximum(geo_coordinates["E"], -180.0), 180.0)
+		return geo_coordinates
 
 	def predict_land_or_water(self, geo_coordinates, show_predictions=bool(0)):
 		i, j = self.geo_coordinates_2_idxs(geo_coordinates)
 		water = self.map == 0
+		predictions = water[i, j]
 		if show_predictions:
 			points = np.zeros(shape=self.map.shape, dtype=bool)
 			points[i,j] = True
 			water_and_points = np.where(points * water)
 			land_and_points = np.where(points * ~water)
-			fig, ax = self.set_figure()
+			fig, ax = plt.subplots(1, 1)
 			self.set_frame(ax, geo_coordinates)
+			ax.imshow(self.map, aspect="auto", cmap=colors.ListedColormap(MARYLAND_COLORS))
 			ax.scatter(water_and_points[1], water_and_points[0], marker="o", c="k", label="Water")
 			ax.scatter(land_and_points[1], land_and_points[0], marker="x", c="k", label="Land")
-			fig.legend()
+			ax.set_xlabel("Longitude")
+			ax.set_ylabel("Latitude")
+			ax.legend(loc="best")
 			plt.show()
-		return i, j, water[i, j]
+		return i, j, predictions
 
 class EarthquakesRecord():
 
-	def __init__(self, path_earth_map, path_earthquakes_record):
-		self.load_data(path_earth_map, path_earthquakes_record)
+	def __init__(self, path_earth_map, path_earthquakes_record, subsampling_factor=1):
+		self.load_data(path_earth_map, path_earthquakes_record, subsampling_factor)
 		
-	def load_data(self, path_earth_map, path_earthquakes_record):
-		self.earth_map = EarthMap(path=path_earth_map, subsampling_factor=10)
+	def load_data(self, path_earth_map, path_earthquakes_record, subsampling_factor):
+		self.earth_map = EarthMap(path_earth_map, subsampling_factor)
 		self.earthquakes = pd.read_csv(path_earthquakes_record, sep=";", header=6, encoding = "ISO-8859-1")
 
 	def predict_land_or_water_earthquakes(self, show_predictions):
@@ -80,15 +97,18 @@ class EarthquakesRecord():
 									   "N": self.earthquakes["Latitudine"].to_numpy(),
 									   "E": self.earthquakes["Longitudine"].to_numpy()
 									  }
+		i, j = self.earth_map.geo_coordinates_2_idxs(earthquakes_geo_coordinates)
 		return self.earth_map.predict_land_or_water(earthquakes_geo_coordinates, show_predictions)
 
-def main(show_predictions):
+def main(show_predictions, subsampling_factor):
 	earthquakes_record = EarthquakesRecord(path_earth_map="gl-latlong-1km-landcover.bsq", 
-										   path_earthquakes_record="events_4.5.txt")
+										   path_earthquakes_record="events_4.5.txt",
+										   subsampling_factor=subsampling_factor)
 	earthquakes_record.predict_land_or_water_earthquakes(show_predictions)
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--show', action=argparse.BooleanOptionalAction, default=False)
+	parser.add_argument('--subsample', type=int, default=1)
 	args = parser.parse_args()
-	main(show_predictions=args.show)
+	main(show_predictions=args.show, subsampling_factor=args.subsample)

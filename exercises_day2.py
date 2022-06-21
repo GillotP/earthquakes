@@ -43,10 +43,23 @@ class Task1(Task):
 	def run(self):
 		self.visualize_data(subsample=50)
 
-def main():
+class Task2(Task):
 
-	task_1 = Task1("./gl-latlong-1km-landcover.bsq")
-	task_1.run()
+	def __init__(self, path):
+		super().__init__(path)
+
+	def load_data(self, path):
+		caca = pd.read_csv(path, sep=";", header=6)
+		print(caca)
+		exit()
+		return np.fromfile(path, dtype=np.uint8).reshape([21600, 43200])
+
+def main(task):
+
+	tasks = {1: Task1("./gl-latlong-1km-landcover.bsq"),
+			 2: None,
+			}
+	tasks[task].run()
 
 if __name__ == '__main__':
-	main()
+	main(task=2)

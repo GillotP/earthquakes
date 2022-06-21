@@ -1,16 +1,12 @@
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import colors
 
-class Task():
+class EarthMap():
 
 	def __init__(self, path):
-		self.data = self.load_data(path)
-
-class Task1(Task):
-
-	def __init__(self, path):
-		super().__init__(path)
+		self.load_map(path)
 
 	def set_maryland_colormap(self):
 		maryland_colors = np.array([( 68,  79, 137),
@@ -29,13 +25,13 @@ class Task1(Task):
 									(  0, 255, 255),]) / 255
 		return colors.ListedColormap(maryland_colors)
 
-	def load_data(self, path):
-		return np.fromfile(path, dtype=np.uint8).reshape([21600, 43200])
+	def load_map(self, path):
+		self.map = np.fromfile(path, dtype=np.uint8).reshape([21600, 43200])
 
 	def visualize_data(self, subsample=1, block=bool(1)):
 		assert type(subsample) == int
 		fig, ax = plt.subplots(1, 1)
-		ax.imshow(self.data[::subsample], aspect="auto", cmap=self.set_maryland_colormap())
+		ax.imshow(self.map[::subsample], aspect="auto", cmap=self.set_maryland_colormap())
 		ax.set_xticks([])
 		ax.set_yticks([])
 		plt.show(block=block)
@@ -43,23 +39,24 @@ class Task1(Task):
 	def run(self):
 		self.visualize_data(subsample=50)
 
-class Task2(Task):
+class EarthquakesRecord():
 
 	def __init__(self, path):
-		super().__init__(path)
+		self.load_earthquakes(path)
 
-	def load_data(self, path):
-		caca = pd.read_csv(path, sep=";", header=6)
-		print(caca)
-		exit()
-		return np.fromfile(path, dtype=np.uint8).reshape([21600, 43200])
+	def load_earthquakes(self, path):
+		self.earthquakes = pd.read_csv(path, sep=";", header=6, encoding = "ISO-8859-1")
 
 def main(task):
 
-	tasks = {1: Task1("./gl-latlong-1km-landcover.bsq"),
-			 2: None,
-			}
-	tasks[task].run()
+	earth_map = EarthMap(path="./gl-latlong-1km-landcover.bsq")
+	#earth_map.visualize_data(subsample=50)
+
+	earthquakes_record = EarthquakesRecord(path="events_4.5.txt")
+	print(earthquakes_record.earthquakes)
+
+
+	#tasks[task].run()
 
 if __name__ == '__main__':
 	main(task=2)

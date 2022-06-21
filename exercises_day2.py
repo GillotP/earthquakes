@@ -2,8 +2,7 @@ import numpy as np
 import pandas as pd
 
 def load_data(path):
-	#return np.fromfile(path)
-	return pd.read_csv(path)
+	return np.fromfile(path, dtype=np.uint8).reshape([43200, 21600])
 
 def main():
 	data = load_data("./gl-latlong-1km-landcover.bsq")

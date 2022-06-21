@@ -43,35 +43,20 @@ class EarthMap():
 	def run(self):
 		self.visualize_data(subsample=50)
 
-	def predict_land_or_water(self, geographic_coordinates):
+	def predict_land_or_water(self, geographic_coordinates, show_predictions=bool(0)):
 		i = np.floor(((90 - geographic_coordinates["N"]) / 180) * (self.map.shape[0] - 1)).astype(int)
 		j = np.floor(((180 + geographic_coordinates["E"]) / 360) * (self.map.shape[1] - 1)).astype(int)
 		water = self.map == 0
-
-		points = np.zeros(shape=self.map.shape, dtype=bool)
-		points[i,j] = True
-
-		water_and_points = np.where(points * water)
-		land_and_points = np.where(points * ~water)
-
-
-
-		# print(i)
-		# print(j)
-		# print(water[i, j])
-		# print(np.where(water_and_points))
-		# print(np.where(land_and_points))
-
-		fig, ax = self.set_map_visualization()
-		#ax.scatter(j, i, marker="o", c="w")
-		ax.scatter(water_and_points[1], water_and_points[0], marker="o", c="k", label="Water")
-		ax.scatter(land_and_points[1], land_and_points[0], marker="x", c="k", label="Land")
-		fig.legend()
-
-		self.visualize_data()
-
-		exit()
-
+		if show_predictions:
+			points = np.zeros(shape=self.map.shape, dtype=bool)
+			points[i,j] = True
+			water_and_points = np.where(points * water)
+			land_and_points = np.where(points * ~water)
+			fig, ax = self.set_map_visualization()
+			ax.scatter(water_and_points[1], water_and_points[0], marker="o", c="k", label="Water")
+			ax.scatter(land_and_points[1], land_and_points[0], marker="x", c="k", label="Land")
+			fig.legend()
+			self.visualize_data()
 		return water[i, j]
 
 
@@ -88,9 +73,10 @@ def main(task):
 	earth_map = EarthMap(path="./gl-latlong-1km-landcover.bsq")
 	#earth_map.visualize_data(subsample=50)
 	geographic_coordinates = {}
-	geographic_coordinates["N"] = np.array([90.0, 0, -90.0])
-	geographic_coordinates["E"] = np.array([180.0, 0, -180.0])
-	earth_map.predict_land_or_water(geographic_coordinates)
+	geographic_coordinates["N"] = 180 * np.random.rand(10) - 90
+	geographic_coordinates["E"] = 360 * np.random.rand(10) - 180
+	preds = earth_map.predict_land_or_water(geographic_coordinates, True)
+	print(preds)
 	exit()
 
 	earthquakes_record = EarthquakesRecord(path="events_4.5.txt")

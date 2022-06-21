@@ -2,37 +2,36 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import colors
+import argparse
+
+MARYLAND_COLORS = np.array([( 68,  79, 137),
+							(  1, 100,   0),
+							(  1, 130,   0),
+							(151, 191,  71),
+							(  2, 220,   0),
+							(  0, 255,   0),
+							(146, 174,  47),
+							(220, 206,   0),
+							(255, 173,   0),
+							(255, 251, 195),
+							(140,  72,   9),
+							(247, 165, 255),
+							(255, 199, 174),
+							(  0, 255, 255),]) / 255
 
 class EarthMap():
 
 	def __init__(self, path, subsampling_factor=1):
 		self.load_data(path, subsampling_factor)
 
-	def set_maryland_colormap(self):
-		maryland_colors = np.array([( 68,  79, 137),
-									(  1, 100,   0),
-									(  1, 130,   0),
-									(151, 191,  71),
-									(  2, 220,   0),
-									(  0, 255,   0),
-									(146, 174,  47),
-									(220, 206,   0),
-									(255, 173,   0),
-									(255, 251, 195),
-									(140,  72,   9),
-									(247, 165, 255),
-									(255, 199, 174),
-									(  0, 255, 255),]) / 255
-		return colors.ListedColormap(maryland_colors)
-
 	def load_data(self, path, subsampling_factor):
 		self.map = np.fromfile(path, dtype=np.uint8).reshape([21600, 43200])[::subsampling_factor]
 
-	def set_map(self):
+	def set_figure(self):
 		fig, ax = plt.subplots(1, 1)
-		ax.imshow(self.map, aspect="auto", cmap=self.set_maryland_colormap())
-		ax.set_xticks([])
-		ax.set_yticks([])
+		ax.imshow(self.map, aspect="auto", cmap=colors.ListedColormap(MARYLAND_COLORS))
+		# ax.set_xticks([])
+		# ax.set_yticks([])
 		return fig, ax
 
 	def set_frame(self, ax, geo_coordinates, extra_frame_size=10.0):
@@ -59,7 +58,7 @@ class EarthMap():
 			points[i,j] = True
 			water_and_points = np.where(points * water)
 			land_and_points = np.where(points * ~water)
-			fig, ax = self.set_map()
+			fig, ax = self.set_figure()
 			self.set_frame(ax, geo_coordinates)
 			ax.scatter(water_and_points[1], water_and_points[0], marker="o", c="k", label="Water")
 			ax.scatter(land_and_points[1], land_and_points[0], marker="x", c="k", label="Land")
@@ -83,11 +82,13 @@ class EarthquakesRecord():
 									  }
 		return self.earth_map.predict_land_or_water(earthquakes_geo_coordinates, show_predictions)
 
-def main():
-
+def main(show_predictions):
 	earthquakes_record = EarthquakesRecord(path_earth_map="gl-latlong-1km-landcover.bsq", 
 										   path_earthquakes_record="events_4.5.txt")
-	earthquakes_record.predict_land_or_water_earthquakes(show_predictions=True)
+	earthquakes_record.predict_land_or_water_earthquakes(show_predictions)
 
 if __name__ == '__main__':
-	main()
+	parser = argparse.ArgumentParser()
+	parser.add_argument('--show', action=argparse.BooleanOptionalAction, default=False)
+	args = parser.parse_args()
+	main(show_predictions=args.show)

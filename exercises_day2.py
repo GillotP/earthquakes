@@ -73,8 +73,8 @@ def main(task):
 	earth_map = EarthMap(path="./gl-latlong-1km-landcover.bsq")
 	#earth_map.visualize_data(subsample=50)
 	geographic_coordinates = {}
-	geographic_coordinates["N"] = 180 * np.random.rand(10) - 90
-	geographic_coordinates["E"] = 360 * np.random.rand(10) - 180
+	geographic_coordinates["N"] = 180 * np.random.rand(100) - 90
+	geographic_coordinates["E"] = 360 * np.random.rand(100) - 180
 	preds = earth_map.predict_land_or_water(geographic_coordinates, True)
 	print(preds)
 	exit()

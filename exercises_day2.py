@@ -66,22 +66,18 @@ class EarthMap():
 	def predict_land_or_water(self, geo_coordinates, show_predictions=bool(0)):
 		i, j = self.geo_coordinates_2_idxs(geo_coordinates)
 		water = self.map == 0
-		predictions = water[i, j]
+		water_predictions = water[i, j]
 		if show_predictions:
-			points = np.zeros(shape=self.map.shape, dtype=bool)
-			points[i,j] = True
-			water_and_points = np.where(points * water)
-			land_and_points = np.where(points * ~water)
 			fig, ax = plt.subplots(1, 1)
 			self.set_frame(ax, geo_coordinates)
 			ax.imshow(self.map, aspect="auto", cmap=colors.ListedColormap(MARYLAND_COLORS))
-			ax.scatter(water_and_points[1], water_and_points[0], marker="o", c="k", label="Water")
-			ax.scatter(land_and_points[1], land_and_points[0], marker="x", c="k", label="Land")
+			ax.scatter(j[water_predictions], i[water_predictions], marker="o", c="k", label="Water")
+			ax.scatter(j[~water_predictions], i[~water_predictions], marker="x", c="k", label="Land")
 			ax.set_xlabel("Longitude")
 			ax.set_ylabel("Latitude")
 			ax.legend(loc="best")
 			plt.show()
-		return i, j, predictions
+		return i, j, water_predictions
 
 class EarthquakesRecord():
 
